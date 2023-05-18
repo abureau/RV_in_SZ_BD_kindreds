@@ -10,6 +10,7 @@ Loïc Mangnier, Jasmin Ricard, Claudia Moreau, Simon Girard, Alexandre Bureau
 Loïc Mangnier, Alexandre Bureau; 
 RetroFun-RVS: a retrospective family-based framework for rare variant analysis incorporating functional annotations
 BioRxiv doi.org/10.1101/2022.06.21.497085;
+
 Loïc Mangnier, Charles Joly-Beauparlant, Arnaud Droit, Steve Bilodeau, Alexandre Bureau; 
 Cis-Regulatory Hubs: a new 3D Model of Complex Disease Genetics with an Application to Schizophrenia
 Life Science Alliance; doi: 10.26508/lsa.202101156 
