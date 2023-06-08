@@ -12,13 +12,13 @@ pathData=/lustre03/project/6033529/quebec_10x/data/freeze/QC
 
 #Filter VCFs created by Illumina DRAGEN on variant genotyping percent (at least 90%) and keep variants with 2 alleles.
 #Create a PLINK version
-bcftools view -i 'N_ALT < 3' -O v -o ${pathData}/seq.vcf ${seqData};
-plink --vcf ${pathData}/seq.vcf --geno 0.1 --set-missing-var-ids @:#:\$1:\$2 --make-bed --keep-allele-order --chr 1-22, X, Y, XY --allow-extra-chr --out ${pathData}/seq;
+bcftools view -i 'N_ALT < 3' -O v -o ${pathData}/seq.vcf ${seqData}
+plink --vcf ${pathData}/seq.vcf --geno 0.1 --set-missing-var-ids @:#:\$1:\$2 --make-bed --keep-allele-order --chr 1-22, X --allow-extra-chr --out ${pathData}/seq
 plink --bfile ${pathData}/seq --recode vcf --out ${pathData}/seq
 
 #Create multi-allelic PLINK files, filtering again on variant genotyping percent (at least 90%).  These multi-allelic variants are not used for quality control.
-bcftools view -i 'N_ALT > 2' -O v -o ${pathData}/seqMultiallelic.vcf ${seqData};
-plink --vcf ${pathData}/seqMultiallelic.vcf --geno 0.1 --set-missing-var-ids @:#:\$1:\$2 --recode vcf --keep-allele-order --chr 1-22, X, Y, XY --allow-extra-chr --out ${pathData}/seqMultiallelic;
+bcftools view -i 'N_ALT > 2' -O v -o ${pathData}/seqMultiallelic.vcf ${seqData}
+plink --vcf ${pathData}/seqMultiallelic.vcf --geno 0.1 --set-missing-var-ids @:#:\$1:\$2 --recode vcf --keep-allele-order --chr 1-22, X --allow-extra-chr --out ${pathData}/seqMultiallelic
 
 #Remove variants with "NON_REF" as alternate allele.
 grep NON_REF ${pathData}/seq.bim 
@@ -88,9 +88,24 @@ bcftools concat -a ${pathData}/seq_bial_QCed.vcf.gz ${pathData}/seq_multial_QCed
 bcftools sort -T /scratch/jasmric/tmp_bcftools_sort -O z -o ${pathData}/seq_merged.vcf.gz -m 9G ${pathData}/seq_merged.vcf 
 
 #Verify if variants with NON_REF as an alternate allele are still remaining (maybe a bug in bcftools).
-zcat ${pathData}/seq_merged.vcf.gz | grep -v -w '<NON_REF>' > ${pathData}/seq_FINAL.vcf
+zcat ${pathData}/seq_merged.vcf.gz | grep -v -w '<NON_REF>' > ${pathData}/seq_merged_nonref.vcf
+bgzip ${pathData}/seq_merged_nonref.vcf
+tabix -p vcf ${pathData}/seq_merged_nonref.vcf.gz
 
-#Compress and index the final VCF.
-bgzip ${pathData}/seq_FINAL.vcf
-tabix -p vcf ${pathData}/seq_FINAL.vcf.gz
+#First, we remove variants located in the centromeres or in the ENCODE blacklist.
+centro=/lustre03/project/6033529/GENOMES/centromeres_hg38.tsv
+blacklist=/lustre03/project/6033529/GENOMES/ENCODE_blacklist_hg38.tsv
+sed '1d' ${centro} | cut -f 2-5 | sed 's/^chr//' > ${pathData}/centro_blacklist_regions.txt
+sed '1d' ${blacklist} | cut -f 1-4 | sed 's/^chr//' >> ${pathData}/centro_blacklist_regions.txt
+plink --vcf ${pathData}/seq_merged_nonref.vcf.gz --exclude range ${pathData}/centro_blacklist_regions.txt --recode vcf --out ${pathData}/seq_FINAL_without_mask
+bgzip ${pathData}/seq_FINAL_without_mask.vcf
+tabix -p vcf ${pathData}/seq_FINAL_without_mask.vcf.gz
+zcat ${pathData}/seq_FINAL_without_mask.vcf.gz | cut -f 1,2,4,5 | grep -v "^#" >> ${pathData}/seq_FINAL_without_mask.snplist
 
+#Keep variants located in the following mask only.
+mask=/lustre03/project/6033529/GENOMES/20160622.allChr.mask.bed
+cut -f 1-3 ${mask} | sed 's/^chr//' | sed 's/^X/23/' > ${pathData}/mask_to_keep.txt
+bcftools view -R ${pathData}/mask_to_keep.txt -O v -o ${pathData}/seq_FINAL_with_mask.vcf ${pathData}/seq_FINAL_without_mask.vcf.gz
+bgzip ${pathData}/seq_FINAL_with_mask.vcf
+tabix -p vcf ${pathData}/seq_FINAL_with_mask.vcf.gz
+zcat ${pathData}/seq_FINAL_with_mask.vcf.gz | cut -f 1,2,4,5 | grep -v "^#" >> ${pathData}/seq_FINAL_with_mask.snplist
