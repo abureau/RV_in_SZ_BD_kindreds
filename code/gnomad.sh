@@ -30,5 +30,15 @@ do
 done
 awk -F'\t' 'FNR==NR{a[$1,$2]=1; next}  !a[$1,$2]' ${pathData}/seq_pos_in_gnomAD_${mask}.txt /lustre03/project/6033529/quebec_10x/data/freeze/RV/pos_to_extract_${mask}.txt > ${pathData}/seq_pos_NOT_in_gnomAD_${mask}.txt
 
+#We want to know what happens to the variants not in CaG...
+for chr in {1..22} X
+do
+  bcftools view -G -T /lustre03/project/6033529/quebec_10x/data/freeze/RV/seq_pos_NOT_in_CaG_${mask}.txt -O v -o ${pathData}/chr${chr}_gnomAD_NOT_in_CaG_${mask}.vcf ${pathData}/chr${chr}_gnomAD_FINAL_${mask}.vcf
+  bcftools view -i 'AF_nfe < 0.01' ${pathData}/chr${chr}_gnomAD_NOT_in_CaG_${mask}.vcf | cut -f 1,2,4,5 | grep -v "^#" > ${pathData}/RV_gnomAD_NOT_in_CaG_chr${chr}_${mask}.snplist
+  bcftools view -i 'AF_nfe >= 0.01' ${pathData}/chr${chr}_gnomAD_NOT_in_CaG_${mask}.vcf | cut -f 1,2,4,5 | grep -v "^#" > ${pathData}/CV_gnomAD_NOT_in_CaG_chr${chr}_${mask}.snplist
+  cat ${pathData}/chr${chr}_gnomAD_NOT_in_CaG_${mask}.vcf | cut -f-2 | grep -v "^#" >> ${pathData}/seq_pos_gnomAD_NOT_in_CaG_${mask}.txt
+done
+awk -F'\t' 'FNR==NR{a[$1,$2]=1; next}  !a[$1,$2]' ${pathData}/seq_pos_gnomAD_NOT_in_CaG_${mask}.txt /lustre03/project/6033529/quebec_10x/data/freeze/RV/seq_pos_NOT_in_CaG_${mask}.txt > ${pathData}/seq_pos_NOT_in_gnomAD_NOT_in_CaG_${mask}.txt
+
 #Use R to compare the lists easily.
 Rscript gnomad.R
