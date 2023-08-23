@@ -4,6 +4,9 @@ library(GenomicRanges)
 library(RetroFunRVS)
 options(scipen=999)
 
+# Nombre maximal de variants test√©s ensemble
+maxvar = 50
+
 #Scripts pour RetroFun-RVS
 #1ere √©tape: Du fait que certaines colonnes ne sont pas formatt√©es correctement pour l'application de 
 #RetroFun-RVS, on fait la correspondance entre les fichiers .ped et les donn√©es familiales 
@@ -14,7 +17,7 @@ options(scipen=999)
 pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected"
 setwd(pathimpu)
 
-#JR 2023-08-07, Il est important de retirer les variants ‡ MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
+#JR 2023-08-07, Il est important de retirer les variants ? MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
 genome_results <- data.frame()
 missing_TADs <- c()
 for(chr in 1:22){
@@ -22,8 +25,8 @@ print(paste0("Traitement du chr ", chr))
 
 TADs <- data.table::fread(paste0(pathimpu, "/TADs_list_chr", chr, ".bed"), header = FALSE)
 
-#Pour certains TADs, aucun variant n'Ètait trouvÈ. On les retire.
-#JR 2023-08-18 ce bout n'est plus utile puisque LoÔc s'est assurÈ que ce n'est pas le cas.
+#Pour certains TADs, aucun variant n'?tait trouv?. On les retire.
+#JR 2023-08-18 ce bout n'est plus utile puisque Lo?c s'est assur? que ce n'est pas le cas.
 fileschr <- list.files(pathimpu)
 fileschrTAD <- fileschr[grep(pattern = paste0("chr_", chr, "_TAD.*\\.frq"), x = fileschr)]
 fileschrTAD <- str_replace(fileschrTAD, ".frq", "")
@@ -90,7 +93,19 @@ for(i in 1:length(split.by.CRH)){
   annotation.matrix[,i] = c 
 }
 
+nvarTAD = length(agg.genos.by.fam$index_variants)
+if (nvarTAD <= maxvar)
 annotation.matrix = cbind(1, annotation.matrix)
+else
+{
+  # Nombre de fen√™tres
+  nw = nvarTAD%/%maxvar + 1
+  wmat = matrix(0,ncol = nw, nrow=length(GRanges.variants))
+  for (w in 1:(nw-1))
+    wmat[agg.genos.by.fam$index_variants[maxvar*(w-1)+1]:agg.genos.by.fam$index_variants[maxvar*w],w] = 1
+  wmat[agg.genos.by.fam$index_variants[maxvar*(nw-1)+1]:nrow(wmat),nw] = 1
+  annotation.matrix = cbind(wmat, annotation.matrix)
+}
 
 df.annotation = data.frame(annotation.matrix)
 colnames(df.annotation) = c("Burden_Original", paste0("CRH",names(split.by.CRH)))
