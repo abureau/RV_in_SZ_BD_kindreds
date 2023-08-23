@@ -94,12 +94,12 @@ for(i in 1:length(split.by.CRH)){
 }
 
 nvarTAD = length(agg.genos.by.fam$index_variants)
+nw = nvarTAD%/%maxvar + 1
 if (nvarTAD <= maxvar)
 annotation.matrix = cbind(1, annotation.matrix)
 else
 {
   # Nombre de fenêtres
-  nw = nvarTAD%/%maxvar + 1
   wmat = matrix(0,ncol = nw, nrow=length(GRanges.variants))
   for (w in 1:(nw-1))
     wmat[agg.genos.by.fam$index_variants[maxvar*(w-1)+1]:agg.genos.by.fam$index_variants[maxvar*w],w] = 1
@@ -108,7 +108,7 @@ else
 }
 
 df.annotation = data.frame(annotation.matrix)
-colnames(df.annotation) = c("Burden_Original", paste0("CRH",names(split.by.CRH)))
+colnames(df.annotation) = c(paste0("Burden_",1:nw), paste0("CRH",names(split.by.CRH)))
 
 null.with.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/launch_RetroFunRVS/null_var_seqped2021_with_consanguinity.txt", header=TRUE, sep="\t")
 attributes(null.with.consanguinity)$distinguishHomo = TRUE
