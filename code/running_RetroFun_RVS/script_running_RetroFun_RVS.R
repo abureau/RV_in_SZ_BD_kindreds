@@ -43,11 +43,13 @@ MAF = data.table::fread(paste0(pathimpu, "/", datafile, ".frq"))
 
 #Load le fichier .ped pour un TAD donné (ici le TAD1 pour le chromosome 22)
 #2 doit etre l'allele mineur. Pour le moment, PLINK code l'allele mineur par 1 et le majeur par 2.
-pedfile = read.table(paste0(pathimpu, "/", datafile, ".ped"))
-pedfile[,c(7:ncol(pedfile))] <- dplyr::case_when(
-  pedfile[,c(7:ncol(pedfile))] == 0 ~ 0,
-  pedfile[,c(7:ncol(pedfile))] == 1 ~ 2,
-  pedfile[,c(7:ncol(pedfile))] == 2 ~ 1)
+pedfile <- read.table(paste0(pathimpu, "/", datafile, ".ped"))
+for(i in 7:nrow(pedfile)){
+  pedfile[,i] <- case_when(
+    pedfile[,i] == 0 ~ 0,
+    pedfile[,i] == 1 ~ 2,
+    pedfile[,i] == 2 ~ 1)
+}
 
 #Load le fichier de phénotype ou les boucles de consanguinité n'ont pas été retirées (fichier ped2021.ped)
 #Conversion en data.frame en vue de faciliter les étapes de manipulations
