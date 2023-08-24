@@ -5,7 +5,7 @@ library(RetroFunRVS)
 options(scipen=999)
 
 # Nombre maximal de variants testés ensemble
-maxvar = 50
+maxvar = 300
 
 #Scripts pour RetroFun-RVS
 #1ere étape: Du fait que certaines colonnes ne sont pas formattées correctement pour l'application de 
@@ -14,7 +14,7 @@ maxvar = 50
 #3ème étape: On crée les fichiers d'annotations pour chaque TAD (à automatiser pour concilier les fichiers crées par Jasmin et les fichiers présents dans CRHs_by_TAD)
 #4ème étape: Execution de la fonction RetroFun-RVS pour chaque TAD
 
-pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected"
+pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected2"
 setwd(pathimpu)
 
 #JR 2023-08-07, Il est important de retirer les variants ? MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
@@ -44,7 +44,7 @@ MAF = data.table::fread(paste0(pathimpu, "/", datafile, ".frq"))
 #Load le fichier .ped pour un TAD donné (ici le TAD1 pour le chromosome 22)
 #2 doit etre l'allele mineur. Pour le moment, PLINK code l'allele mineur par 1 et le majeur par 2.
 pedfile <- read.table(paste0(pathimpu, "/", datafile, ".ped"))
-for(i in 7:nrow(pedfile)){
+for(i in 7:ncol(pedfile)){
   pedfile[,i] <- case_when(
     pedfile[,i] == 0 ~ 0,
     pedfile[,i] == 1 ~ 2,
@@ -96,7 +96,8 @@ for(i in 1:length(split.by.CRH)){
 }
 
 nvarTAD = length(agg.genos.by.fam$index_variants)
-nw = nvarTAD%/%maxvar + 1
+cat(nvarTAD,"\n")
+nw = (nvarTAD-1)%/%maxvar + 1
 if (nvarTAD <= maxvar)
 annotation.matrix = cbind(1, annotation.matrix)
 else
