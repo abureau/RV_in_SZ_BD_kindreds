@@ -114,7 +114,7 @@ df.annotation = data.frame(annotation.matrix)
 colnames(df.annotation) = c(paste0("Burden_",1:nw), paste0("CRH",names(split.by.CRH)))
 
 #null.with.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/launch_RetroFunRVS/null_var_seqped2021_with_consanguinity.txt", header=TRUE, sep="\t")
-load("expected.variance.consanguinity.cryptique.seq.RData")
+load("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/expected.variance.consanguinity.cryptique.seq.RData")
 #attributes(expected.variance.consanguinity.cryptique.seq)$distinguishHomo = TRUE
 results = RetroFun.RVS(expected.variance.consanguinity.cryptique.seq, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
 
