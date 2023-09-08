@@ -2,6 +2,7 @@
 library(stringr)
 library(GenomicRanges)
 library(RetroFunRVS)
+library(dplyr)
 options(scipen=999)
 
 # Nombre maximal de variants testés ensemble
@@ -14,7 +15,7 @@ maxvar = 300
 #3ème étape: On crée les fichiers d'annotations pour chaque TAD (à automatiser pour concilier les fichiers crées par Jasmin et les fichiers présents dans CRHs_by_TAD)
 #4ème étape: Execution de la fonction RetroFun-RVS pour chaque TAD
 
-pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected2"
+pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected"
 setwd(pathimpu)
 
 #JR 2023-08-07, Il est important de retirer les variants ? MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
@@ -80,7 +81,7 @@ GRanges.variants =  GRanges(seqnames=variants[,1], ranges=IRanges(start=as.numer
 #Un fichier par TAD avec les CRHs présents
 #Ici les CRHs correspondant au TAD 1 pour le chromosome 22 (à automatiser)
 
-CRHs.by.TAD = read.table(paste0("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons_correct/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs$V2[TAD]+1, "_", TADs$V3[TAD], ".bed"), header=TRUE)
+CRHs.by.TAD = read.table(paste0("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/liftover_hg38/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs$V2[TAD]+1, "_", TADs$V3[TAD], ".bed"), header=TRUE)
 GRanges.CRHs.by.TAD = GRanges(seqnames=CRHs.by.TAD$chrom, ranges=IRanges(start=CRHs.by.TAD$chromStart, end=CRHs.by.TAD$chromEnd),name=CRHs.by.TAD$name)
 
 #On split par CRH
