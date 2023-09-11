@@ -20,7 +20,7 @@ output <- args[2]
 print(pathimpu)
 print(output)
 
-setwd(pathimpu)
+#setwd(pathimpu)
 
 #JR 2023-08-07, Il est important de retirer les variants ▒ MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
 genome_results <- data.frame()
