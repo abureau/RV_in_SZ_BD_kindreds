@@ -66,7 +66,7 @@ pedfile <- pedfile[pedfile$V2 %in% pedfile.fam.infos.full$id, ]
 all(pedfile$V2 == pedfile.fam.infos.full$id)
 pedfile[,1:6] = pedfile.fam.infos.full
 
-agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, correction="none")
+agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, correction="replace")
 
 #Creation des fichiers d'annotations
 #Ici on part directement des fichiers .map
@@ -113,9 +113,10 @@ else
 df.annotation = data.frame(annotation.matrix)
 colnames(df.annotation) = c(paste0("Burden_",1:nw), paste0("CRH",names(split.by.CRH)))
 
-null.with.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/launch_RetroFunRVS/null_var_seqped2021_with_consanguinity.txt", header=TRUE, sep="\t")
-attributes(null.with.consanguinity)$distinguishHomo = TRUE
-results = RetroFun.RVS(null.with.consanguinity, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
+null.without.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected/null_var_seqped2021_without_consanguinity.txt", header=TRUE, sep="\t")
+attributes(null.without.consanguinity)$distinguishHomo = FALSE
+results = RetroFun.RVS(null.without.consanguinity, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
+
 
 #Creer la sortie pour chaque TAD
 n_CRH <- length(results)-2
@@ -129,5 +130,6 @@ saveRDS(results_dataframe, paste0("/lustre03/project/6033529/quebec_10x/results/
 
 genome_results <- rbind(genome_results, results_dataframe)
 }
-saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/RetroFun.RVS_results_seq_all_chromosomes.RDS"))
-data.table::fwrite(data.table::data.table(missing_TADs), "/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/empty_TADs.txt")
+saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/RetroFun.RVS_results_seq_all_chromosomes_without_consanguinity_replace.RDS"))
+data.table::fwrite(data.table::data.table(missing_TADs), "/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/empty_TADs_without_consanguinity_replace.txt")
+
