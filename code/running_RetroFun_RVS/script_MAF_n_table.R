@@ -19,9 +19,16 @@ is_within_any_range <- function(value, ranges_df) {
 MAF <- function(ped, var, freq = TRUE){
   ped_var <- ped[,c(5+(var*2), 6+(var*2))]
   tab <- sort(table(unlist(ped_var)))
-  if(length(tab)==1){tab <- c(0,tab)}
+  #Minor alleles are 1 and major alleles are 2. 
+  #If the length of tab is 1 and the only allele is "2", then the MAF is 0;
+  #If the length of tab is 1 and the only allele is "1", then the MAF is 1;
+  if(length(tab)==1){
+    if(names(tab) == "2"){tab <- c(0,tab)}else if(names(tab) == "1"){tab <- c(tab,0)}
+  } 
   if(freq){return(tab[[1]]/sum(tab))}else{return(tab[[1]])}
 }
+
+
 
 #Are we using the results from the analysis with consanguinity? If yes, set `consanguinity` to TRUE, else, set it to FALSE.
 consanguinity <- TRUE
