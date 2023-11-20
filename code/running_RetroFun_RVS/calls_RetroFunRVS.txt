@@ -1,3 +1,11 @@
+# Code to run the analysis without cryptic relatedness and consanguinity
+# CRHs included in a single TAD
+Rscript script_running_RetroFun_RVS.R
+# CRHs outside of any TAD
+Rscript script_running_RetroFunRVS_CRHs.R data0 results0
+# CRHs overlapping 2 TADs
+Rscript script_running_RetroFunRVS_CRHs.R data2 results2
+
 # Code to run the analysis with cryptic relatedness
 # CRHs included in a single TAD
 Rscript script_running_RetroFun_RVS_cryptique.R
@@ -5,4 +13,3 @@ Rscript script_running_RetroFun_RVS_cryptique.R
 Rscript script_running_RetroFunRVS_CRHs_cryptique.R data0 results0
 # CRHs overlapping 2 TADs
 Rscript script_running_RetroFunRVS_CRHs_cryptique.R data2 results2
-
