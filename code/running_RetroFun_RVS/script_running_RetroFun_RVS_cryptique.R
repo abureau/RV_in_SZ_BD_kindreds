@@ -127,9 +127,9 @@ out <- data.frame("chr" = rep(chr, n_CRH), "TAD" = rep(TAD, n_CRH), "TAD_name" =
 
 results_dataframe <- rbind(results_dataframe, out)
 }
-saveRDS(results_dataframe, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/RetroFun.RVS_results_seq_chr", chr, ".RDS"))
+saveRDS(results_dataframe, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/RetroFun.RVS_results_seq_chr", chr, "_with_consanguinity.RDS"))
 
 genome_results <- rbind(genome_results, results_dataframe)
 }
-saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/RetroFun.RVS_results_seq_all_chromosomes.RDS"))
+saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/RetroFun.RVS_results_seq_all_chromosomes_with_consanguinity.RDS"))
 data.table::fwrite(data.table::data.table(missing_TADs), "/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/empty_TADs.txt")
