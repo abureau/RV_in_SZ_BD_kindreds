@@ -17,6 +17,8 @@ maxvar = 300
 
 pathimpu <- "/lustre03/project/6033529/quebec_10x/data/freeze/QC/mendel_corrected"
 setwd(pathimpu)
+#null.with.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/launch_RetroFunRVS/null_var_seqped2021_with_consanguinity.txt", header=TRUE, sep="\t")
+load("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/expected.variance.consanguinity.cryptique.seq.RData")
 
 #JR 2023-08-07, Il est important de retirer les variants ? MAF==0 et ceux qui rencontre un probleme d'inconsistence (MAF==NA)
 genome_results <- data.frame()
@@ -67,8 +69,6 @@ pedfile <- pedfile[pedfile$V2 %in% pedfile.fam.infos.full$id, ]
 all(pedfile$V2 == pedfile.fam.infos.full$id)
 pedfile[,1:6] = pedfile.fam.infos.full
 
-agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, correction="none")
-
 #Creation des fichiers d'annotations
 #Ici on part directement des fichiers .map
 
@@ -96,26 +96,28 @@ for(i in 1:length(split.by.CRH)){
   annotation.matrix[,i] = c 
 }
 
+annotation.matrix = cbind(1, annotation.matrix)
+agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, Z_annot=annotation.matrix, correction="none")
 nvarTAD = length(agg.genos.by.fam$index_variants)
 cat(nvarTAD,"\n")
 nw = (nvarTAD-1)%/%maxvar + 1
-if (nvarTAD <= maxvar)
-annotation.matrix = cbind(1, annotation.matrix)
-else
+# Si le nombre de variants excède maxvar, on découpe en fenêtre de maxvar
+if (nvarTAD > maxvar)
 {
   # Nombre de fenêtres
   wmat = matrix(0,ncol = nw, nrow=length(GRanges.variants))
   for (w in 1:(nw-1))
     wmat[agg.genos.by.fam$index_variants[maxvar*(w-1)+1]:agg.genos.by.fam$index_variants[maxvar*w],w] = 1
   wmat[agg.genos.by.fam$index_variants[maxvar*(nw-1)+1]:nrow(wmat),nw] = 1
-  annotation.matrix = cbind(wmat, annotation.matrix)
+  # Ici il faut retirer la colonne de 1 initiale
+  annotation.matrix = cbind(wmat, annotation.matrix[,-1])
+  # On recalcule le nombre de variants par fenêtre
+  agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, Z_annot=annotation.matrix, correction="none")
 }
 
 df.annotation = data.frame(annotation.matrix)
 colnames(df.annotation) = c(paste0("Burden_",1:nw), paste0("CRH",names(split.by.CRH)))
 
-#null.with.consanguinity = read.table("/lustre03/project/6033529/quebec_10x/data/CRHs_iPSC_neurons/launch_RetroFunRVS/null_var_seqped2021_with_consanguinity.txt", header=TRUE, sep="\t")
-load("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS_cryptique/expected.variance.consanguinity.cryptique.seq.RData")
 #attributes(expected.variance.consanguinity.cryptique.seq)$distinguishHomo = TRUE
 results = RetroFun.RVS(expected.variance.consanguinity.cryptique.seq, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
 
