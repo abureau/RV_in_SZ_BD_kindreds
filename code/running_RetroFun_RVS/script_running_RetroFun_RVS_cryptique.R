@@ -42,7 +42,6 @@ for(TAD in TADs_to_keep){
 print(paste0("Traitement du TAD ", TAD))
 
 datafile = paste0("seq_FINAL_chr_", chr, "_TAD_", TAD, "_with_mask")
-MAF = data.table::fread(paste0(pathimpu, "/", datafile, ".frq"))
 
 #Load le fichier .ped pour un TAD donné (ici le TAD1 pour le chromosome 22)
 #2 doit etre l'allele mineur. Pour le moment, PLINK code l'allele mineur par 1 et le majeur par 2.
