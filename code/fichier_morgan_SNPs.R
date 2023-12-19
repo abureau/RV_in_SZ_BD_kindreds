@@ -2,31 +2,29 @@
 # modifs de Jasmin juin 2023
 # Prépare les fichiers pour rentrer dans Morgan pour tous les chromosomes
 
-# À exécuter à partir de ~/home/jricard/lg_auto_data
+# À exécuter à partir de ~/home/jricard/gl_auto_data
 
 
 for(j in 1:22){
 
-setwd("/home/jricard/lg_auto_data/larger_framework")
+setwd("/home/jricard/gl_auto_data/corrected_pedigree")
 
 dir.create(paste0("chr",j))
 
 setwd(paste0("chr",j))
 
-system(paste0("cp /home/jricard/lg_auto_data/glauto.par ./"))
+system(paste0("cp /home/jricard/gl_auto_data/glauto.par ./"))
 
 # 3 premieres colonnes : subjectID fatherID motherID
 # 4e colonne : sexe
 # 5e colonne : dummy trait (values 0) used only by gl_auto
 
 # Fichier pre obtenu à cet endroit : 
-pre <- read.table("/home/jricard/lg_auto_data/GCbroad.pre")
-pre[pre[,1] == "245" & pre[,3]==2162, 3]=0 
-pre[pre[,1] == "245" & pre[,4]==2163, 4]=0 
-pre[pre[,3] %in% c(0, 3186, 2314, 2381), 3]=0 
-pre[pre[,4] %in% c(0, 3187, 2313, 2380), 4]=0
+pre <- read.table("/home/jricard/gl_auto_data/GCbroad.pre")
+pre[pre[,1] == "245" & pre[,3]==2162, 3]=0 ;pre[pre[,1] == "245" & pre[,4]==2163, 4]=0 
+pre[pre[,3] %in% c(0, 3186, 2314, 2381), 3]=0 ; pre[pre[,4] %in% c(0, 3187, 2313, 2380), 4]=0
 
-ped <- read.table(paste0("/home/jricard/lg_auto_data/larger_framework/GSA_genotypes_clumped_mendel_chr",j,".ped"))
+ped <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/GSA_genotypes_clumped_mendel_chr",j,".ped"))
 
 #Ne conserver l'info que pour nos sujets
 #pre <- pre[pre$V2 %in% ped$V2,]
@@ -43,12 +41,9 @@ ped <- read.table(paste0("/home/jricard/lg_auto_data/larger_framework/GSA_genoty
 
 # combiner avec noms de famille avec nom de sujet pour assurer pas de doublons dans les noms de sujet
 pre[,2]=paste(pre[,1],pre[,2],sep="_")
-pere=pre[,3]
-mere=pre[,4]
-pre[,3]=paste(pre[,1],pere,sep="_")
-pre[,4]=paste(pre[,1],mere,sep="_")
-pre[pere==0,3]="0"
-pre[mere==0,4]="0"
+pere=pre[,3]; mere=pre[,4]
+pre[,3]=paste(pre[,1],pere,sep="_"); pre[,4]=paste(pre[,1],mere,sep="_")
+pre[pere==0,3]="0"; pre[mere==0,4]="0"
 
 pedigree <- pre[,2:5]
 #creation de la variable dummy trait
@@ -68,14 +63,13 @@ write.table(pedigree,"GCbroad_v2.ped",quote=F,row.names=F,col.names=F,append=T)
 
 op <- options(scipen=999)
 
-position = read.table(paste0("/home/jricard/lg_auto_data/larger_framework/GSA_genotypes_clumped_mendel_chr",j,".map"))
-#genpos <- read.table(paste0("/home/jricard/lg_auto_data/larger_framework/GSA_genotypes_genetic_distance_clumped_chr",j,".txt"))
-#position[,3] <- genpos[,3]
-names(position)[1:3] = c("chr","rs","positionGenetique")
+position <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/GSA_genotypes_clumped_mendel_chr",j,".map"))
+names(position) <- c("chr","rs","positionGenetique", "positionPhysique")
+source("/mnt-biostats/gen_map_GRCh38/gen_pos_interpolation_grch38.R")
+position$positionGenetique <- gen_pos_interpolation_grch38(infos.chr = position$chr, infos.pos = position$positionPhysique, dir = "/mnt-biostats/gen_map_GRCh38", method = "linear", ncores = 1)
 which.keep=which(!duplicated(position$positionGenetique))
 which.geno.keep=c(2*which.keep-1,2*which.keep)
 which.geno.keep=which.geno.keep[order(which.geno.keep)]
-
 position=position[which.keep,]
 
 # On fixe les fréquences d'allèle à 0.5

@@ -1,0 +1,80 @@
+# This is an example parameter file that gl_auto uses.
+
+
+### Preface ###
+# download gl_auto from http://www.stat.washington.edu/thompson/Genepi/MORGAN/Morgan.shtml
+
+#Documentation
+# gl_auto: http://www.stat.washington.edu/thompson/Genepi/MORGAN/morgan311-tut-html/morgan-tut_9.html
+# MORGAN (which includes the specification of the file formats): http://www.stat.washington.edu/thompson/Genepi/MORGAN/morgan311-tut-html/morgan-tut.html
+
+# to run gl_auto, use the command
+# ./gl_auto glauto.par > glauto_console_output.txt
+    # ignore the warning that " No proband gametes specified  (W)" 
+
+# After running gl_auto, you would need to extract some content from this glauto_console_output.txt file to a new file (pedigree-meiosis file) that will be used in GIGI. You can extract this content either manually or by using an included perl script. See the GIGI documentation.
+
+
+
+###################################################################
+
+
+#input file:
+input pedigree file 'GCbroad_v2.ped'
+input marker data file 'framework_gcbroad.map_af_geno'
+input seed file '../sampler.seed'
+
+#output file:
+output overwrite pedigree file 'check.oped'
+output scores file 'framework_IVs.scor'
+output meiosis indicators
+output extra file 'framework.IVs'
+
+#note: You may also use the full path to specify the location of files: eg. /acct/cykc/DATA/simulation/ped52.ped
+
+
+########## other gl_auto program options #############
+# scoring:  We keep MCMC samples that are less correlated (every 30th).
+output scores every 30 scored MC iterations   # these are the realized IVs - In this example, we will print 300/30 = 100 IVs to the output file
+# set MC iterations 3000          
+# set burn-in iterations 100
+
+#When you run gl_auto, you may want to sample more:
+set MC iterations 30000
+set burn-in iterations 1000
+#to sample 1000 IVs instead
+
+
+check marker consistency
+select all markers
+select trait 1
+
+use multiple meiosis sampler
+set limit for exact computation 18
+
+# Monte Carlo setup and requests
+use sequential imputation for setup
+sample by scan
+set L-sampler probability 0.5
+
+#Print level - uncomment the next line if you want the output to contain more information
+#set printlevel 5
+
+
+
+
+
+
+
+
+
+##################################################################
+#these dummy lines are here just so the program would run
+#the inference of IVs doesn't have anything to do with the trait
+#just include these lines:
+#trait
+#tloc 11 is just a name
+set trait 1  tloc 11
+map tloc 11 unlinked                   # trait locus is unlinked
+set tloc 11 allele freqs 0.5 0.5
+
