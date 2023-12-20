@@ -24,7 +24,7 @@ pre <- read.table("/home/jricard/gl_auto_data/GCbroad.pre")
 pre[pre[,1] == "245" & pre[,3]==2162, 3]=0 ;pre[pre[,1] == "245" & pre[,4]==2163, 4]=0 
 pre[pre[,3] %in% c(0, 3186, 2314, 2381), 3]=0 ; pre[pre[,4] %in% c(0, 3187, 2313, 2380), 4]=0
 
-ped <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/GSA_genotypes_clumped_mendel_chr",j,".ped"))
+ped <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/omni_gsa_common_var_mendel_clumped_chr",j,".ped"))
 
 #Ne conserver l'info que pour nos sujets
 #pre <- pre[pre$V2 %in% ped$V2,]
@@ -63,7 +63,7 @@ write.table(pedigree,"GCbroad_v2.ped",quote=F,row.names=F,col.names=F,append=T)
 
 op <- options(scipen=999)
 
-position <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/GSA_genotypes_clumped_mendel_chr",j,".map"))
+position <- read.table(paste0("/home/jricard/gl_auto_data/corrected_pedigree/omni_gsa_common_var_mendel_clumped_chr",j,".map"))
 names(position) <- c("chr","rs","positionGenetique", "positionPhysique")
 source("/mnt-biostats/gen_map_GRCh38/gen_pos_interpolation_grch38.R")
 position$positionGenetique <- gen_pos_interpolation_grch38(infos.chr = position$chr, infos.pos = position$positionPhysique, dir = "/mnt-biostats/gen_map_GRCh38", method = "linear", ncores = 1)
