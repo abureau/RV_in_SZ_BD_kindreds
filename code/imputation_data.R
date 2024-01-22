@@ -27,6 +27,7 @@ fam <- fam[,c("FID", "IID", "FTR", "MTR", "SEX")]
 #WGS data data
 wgs_ped <- fread(paste0(path_data, "/seq_FINAL_with_mask_gen_map_var_chr", chr, ".ped"), colClasses = 'character', data.table = FALSE)
 wgs_map <- fread(paste0(path_data, "/seq_FINAL_with_mask_gen_map_var_chr", chr, ".map"), colClasses = 'character', data.table = FALSE)
+wgs_map$V3 <- as.numeric(wgs_map$V3)
 
 #Import subject IDs.
 id.fam.suj <- fread("check.oped", skip = 6, header = FALSE, colClasses = 'character')[[1]]
@@ -54,7 +55,7 @@ fwrite(pos_dens[out_order,], "dense.pos.txt", row.names=F, quote=F, col.names=F,
 
 #Convert allele in numbers. Monomorphic SNPs are coded as 1
 pre_start <- pre[,1:6]
-geno <- pre; geno[geno=="0"] <- "Z"
+geno <- pre[,-(1:6)]; geno[geno=="0"] <- "Z"
 tmp <- matrix(as.vector(as.matrix(geno)),ncol=ncol(geno)/2)
 geno.new <- matrix(as.vector(as.matrix(apply(tmp,2,function(x) as.numeric(as.factor(x))))),ncol=ncol(geno))
 geno.new[geno.new==3] <- 0
