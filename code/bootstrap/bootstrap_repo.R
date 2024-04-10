@@ -1,5 +1,7 @@
-# Code for recomputing with the bootstrap the p-values of the five signals 
-# with an ACAT-combined p-value inferior to the Bonferroni-corrected significance level of 0.05.
+# Code for recomputing with the bootstrap the p-values of four signals 
+# with an ACAT-combined p-value inferior to the Bonferroni-corrected significance level of 0.05
+# and the CRH for which results are reported in the Illustration on the Eastern Quebec 
+# Schizophrenia and Bipolar Disorder Kindred Study.
 # All computations performed with distinguishHomo
 
 library(RetroFunRVS)
@@ -56,7 +58,7 @@ score_crypt.CRH277 = compute.Burden.by.Annot(expected.variance.consanguinity.cry
 
 mean(boot.crypt.CRH277>=score_crypt.CRH277)
 
-
+# Results are reported for CRH 1438 in the Illustration on the Eastern Quebec Schizophrenia and Bipolar Disorder Kindred Study.
 load("agg.genos.by.fam_CRH1438.RData")
 
 set.seed(10)
