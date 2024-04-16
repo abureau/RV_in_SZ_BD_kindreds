@@ -1,3 +1,4 @@
+#To generate Figure S16.
 library(data.table); library(dplyr); library(kinship2); library(glue)
 
 path_data <- "/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples/phasing/seq_FINAL_with_mask_gen_map_var_chr7"
