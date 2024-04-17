@@ -7,7 +7,7 @@ Tested genomic regions are defined based on the cis-regulatory hubs (CRH) define
 Loïc Mangnier, Jasmin Ricard, Claudia Moreau, Simon Girard, Alexandre Bureau
 
 ## References
-Loïc Mangnier, Alexandre Bureau; 
+Loïc Mangnier, Ingo Ruczinski, Jasmin Ricard, Claudia Moreau, Simon Girard, Michel Maziade, Alexandre Bureau; 
 RetroFun-RVS: a retrospective family-based framework for rare variant analysis incorporating functional annotations.
 BioRxiv doi.org/10.1101/2022.06.21.497085;
 
