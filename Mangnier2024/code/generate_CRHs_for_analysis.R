@@ -147,8 +147,8 @@ CRHs_clusters = coverage.By.CRH(CRHs_iPSC_NEU,ABC_Pred_with_membership ,method="
 CRHs_clusters.liftover.hg38 = coverage.By.CRH(CRHs_iPSC_NEU.liftover.hg38,ABC_Pred_with_membership.liftover.hg38 ,method="ABC")$clusters
 
 #Correspondance entre les CRHs et les TADs
-index_overlaps_CRHs_TADs = findOverlaps(CRHs_clusters, TADs_DI_iPSC_NEu)
-overlaps_CRHs_TADs = countOverlaps(CRHs_clusters, TADs_DI_iPSC_NEu)
+index_overlaps_CRHs_TADs = findOverlaps(CRHs_clusters, TADs_DI_iPSC_NEU)
+overlaps_CRHs_TADs = countOverlaps(CRHs_clusters, TADs_DI_iPSC_NEU)
 
 index_overlaps_CRHs_TADs.liftover.hg38 = findOverlaps(CRHs_clusters.liftover.hg38, TADs_DI_iPSC_NEU_hg38.final)
 overlaps_CRHs_TADs.liftover.hg38 = countOverlaps(CRHs_clusters.liftover.hg38, TADs_DI_iPSC_NEU_hg38.final)
@@ -212,14 +212,14 @@ length(unique(queryHits(index_overlaps_CRHs_TADs[subjectHits(index_overlaps_CRHs
 #à refaire rouler pour obtenir des CRHs qui ne chevauchent réellement qu' 1 seul TAD
 for(i in unique(subjectHits(index_overlaps_CRHs_TADs[queryHits(index_overlaps_CRHs_TADs)%in%CRHs_wich_overlap_1TAD&subjectHits(index_overlaps_CRHs_TADs)%in%subset_index_TADs_CRHs_wich_overlap_1TAD]))){
   write.table(do.call("rbind",list.Genes.Enhancers.by.CRH[queryHits(index_overlaps_CRHs_TADs[subjectHits(index_overlaps_CRHs_TADs)==i])]),
-              paste0("C:\\Users\\loicm\\Documents\\CRHs_SZ\\data\\TADs_for_CRHs_overlap_1_TAD\\", seqnames(TADs_DI_iPSC_NEu[i]),"_",start(TADs_DI_iPSC_NEu[i]),"_", end(TADs_DI_iPSC_NEu[i]), ".bed"), col.names = TRUE, row.names = FALSE, quote=FALSE, sep="\t")
+              paste0("C:\\Users\\loicm\\Documents\\CRHs_SZ\\data\\TADs_for_CRHs_overlap_1_TAD\\", seqnames(TADs_DI_iPSC_NEU[i]),"_",start(TADs_DI_iPSC_NEU[i]),"_", end(TADs_DI_iPSC_NEU[i]), ".bed"), col.names = TRUE, row.names = FALSE, quote=FALSE, sep="\t")
   
 }
 
 
 for(TAD in subset_index_TADs_CRHs_wich_overlap_1TAD){
-  chr = seqnames(TADs_DI_iPSC_NEu[TAD])
-  rtracklayer::export(TADs_DI_iPSC_NEu[TAD], paste0("C:\\Users\\loicm\\Documents\\CRHs_SZ\\data\\Subset_TADs\\",chr,"\\",paste0("TAD_",start(TADs_DI_iPSC_NEu[TAD]),"_", end(TADs_DI_iPSC_NEu[TAD]), ".bed")), format="bed")
+  chr = seqnames(TADs_DI_iPSC_NEU[TAD])
+  rtracklayer::export(TADs_DI_iPSC_NEU[TAD], paste0("C:\\Users\\loicm\\Documents\\CRHs_SZ\\data\\Subset_TADs\\",chr,"\\",paste0("TAD_",start(TADs_DI_iPSC_NEU[TAD]),"_", end(TADs_DI_iPSC_NEU[TAD]), ".bed")), format="bed")
 }
 
 #Analyse avec liftover
