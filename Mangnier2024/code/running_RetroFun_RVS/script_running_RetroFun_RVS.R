@@ -65,8 +65,6 @@ pedfile <- pedfile[pedfile$V2 %in% pedfile.fam.infos.full$id, ]
 all(pedfile$V2 == pedfile.fam.infos.full$id)
 pedfile[,1:6] = pedfile.fam.infos.full
 
-agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, correction="replace")
-
 #Creation des fichiers d'annotations
 #Ici on part directement des fichiers .map
 
@@ -94,19 +92,23 @@ for(i in 1:length(split.by.CRH)){
   annotation.matrix[,i] = c 
 }
 
+annotation.matrix = cbind(1, annotation.matrix)
+agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, Z_annot=annotation.matrix, correction="none")
 nvarTAD = length(agg.genos.by.fam$index_variants)
 cat(nvarTAD,"\n")
 nw = (nvarTAD-1)%/%maxvar + 1
-if (nvarTAD <= maxvar)
-annotation.matrix = cbind(1, annotation.matrix)
-else
+# Si le nombre de variants excÃšde maxvar, on dÃ©coupe en fenÃªtre de maxvar
+if (nvarTAD > maxvar)
 {
   # Nombre de fenêtres
   wmat = matrix(0,ncol = nw, nrow=length(GRanges.variants))
   for (w in 1:(nw-1))
     wmat[agg.genos.by.fam$index_variants[maxvar*(w-1)+1]:agg.genos.by.fam$index_variants[maxvar*w],w] = 1
   wmat[agg.genos.by.fam$index_variants[maxvar*(nw-1)+1]:nrow(wmat),nw] = 1
-  annotation.matrix = cbind(wmat, annotation.matrix)
+  # Ici il faut retirer la colonne de 1 initiale
+  annotation.matrix = cbind(wmat, annotation.matrix[,-1])
+  # On recalcule le nombre de variants par fenÃªtre
+  agg.genos.by.fam = agg.genos.by.fam(pedfile.path=NULL, pedfile=pedfile, Z_annot=annotation.matrix, correction="none")
 }
 
 df.annotation = data.frame(annotation.matrix)
