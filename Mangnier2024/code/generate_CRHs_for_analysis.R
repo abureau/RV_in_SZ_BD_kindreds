@@ -150,9 +150,6 @@ CRHs_clusters.liftover.hg38 = coverage.By.CRH(CRHs_iPSC_NEU.liftover.hg38,ABC_Pr
 index_overlaps_CRHs_TADs = findOverlaps(CRHs_clusters, TADs_DI_iPSC_NEU)
 overlaps_CRHs_TADs = countOverlaps(CRHs_clusters, TADs_DI_iPSC_NEU)
 
-index_overlaps_CRHs_TADs.liftover.hg38 = findOverlaps(CRHs_clusters.liftover.hg38, TADs_DI_iPSC_NEU_hg38.final)
-overlaps_CRHs_TADs.liftover.hg38 = countOverlaps(CRHs_clusters.liftover.hg38, TADs_DI_iPSC_NEU_hg38.final)
-
 
 #Nombre de TADs pour lesquels on a des CRHs qui ne chevauchent qu'1 seul TAD
 unique(subjectHits(index_overlaps_CRHs_TADs[queryHits(index_overlaps_CRHs_TADs)%in%which(overlaps_CRHs_TADs%in%c(1))]))
