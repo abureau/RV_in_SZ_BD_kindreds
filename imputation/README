@@ -1,0 +1,11 @@
+1 -  quality_control.sh
+2 -  phasing_shapeit5_common.sh
+3 -  phasing_shapeit5_rare.sh
+4 -  phasing_shapeit5_genotyping.sh
+5 -  fichier_morgan_SNPs.R
+6 -  gl_auto.sh which uses glauto.par
+7 -  imputation_Impute5.sh
+8 -  imputation_data_split.R
+9 -  imputation_GIGI2_by_fam.sh
+10 - imputation_comb_GIGI2_impute5.sh
+11 - annotations.sh
