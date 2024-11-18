@@ -42,15 +42,12 @@ agg.genos.annotations.TAD <- function(pheno, with_exons, consanguinity, path_ret
   
   #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   if(consanguinity){
-    null_name <- "expected.variance.consanguinity.cryptique.seq.rds"
     correction <- "none"
     out_consanguinity <- "with_consanguinity"
   } else {
-    null_name <- "expected.variance.seq.rds"
     correction <- "replace"
     out_consanguinity <- "without_consanguinity"
   }
-  null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
