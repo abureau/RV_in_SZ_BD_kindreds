@@ -7,6 +7,9 @@ agg.genos.annotations.TAD <- function(pheno, with_exons, consanguinity, path_ret
   #with_exons, logical, TRUE if we add the exons to the CRHs for the analysis.
   #consanguinity, logical, TRUE if we consider consanguinity loops in the analysis.
   #maxvar, integer, maximum normal of variants to test together.
+  #path_retrofun, string, Path to root folder for required data 
+  #chr, numeric, chromosome number
+  #TAD, numeric, TAD number within the chromosome
   
   TADs <- data.table::fread(paste0(path_retrofun, "/TADs/TADs_list_chr", chr, ".bed"), header = FALSE)
   datafile <- paste0("impute5_gigi2_combined_seq_RV_FINAL_chr", chr, "_TAD_", TAD)
@@ -112,8 +115,9 @@ agg.genos.annotations.TAD <- function(pheno, with_exons, consanguinity, path_ret
 }
 
 # Function for extracting a CRH from an object returned by agg.genos.annotations.TAD
-extract_CRH = function(TAD.obj,selec)
-{
+extract_CRH = function(TAD.obj,selec){
+  #TAD.obj, object returned for the TAD by agg.genos.by.fam
+  #selec, string, name of CRH to extract from the TAD data
   iv = which(TAD.obj$Z_annot[TAD.obj$agg.genos.by.fam$index_variants,selec]==1)
   if (length(iv)>0) 
   {

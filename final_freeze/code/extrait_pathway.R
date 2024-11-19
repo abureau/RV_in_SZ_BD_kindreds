@@ -4,6 +4,8 @@ agg.genos.pathways <- function(pheno, with_exons, strict = FALSE, consanguinity,
   #with_exons, logical, TRUE if we consider exonic variants ONLY.
   #strict, logical, TRUE if we consider exonic variants ONLY without synonymous variants. Only TRUE if with_exons if TRUE.
   #consanguinity, logical, TRUE if we consider consanguinity loops in the analysis.
+  #path_retrofun, string, Path to root folder for required data
+  #id, string, Pathway ID
   
   if(strict & !with_exons){stop("Strict cannot be TRUE if with_exons is FALSE")}
   
