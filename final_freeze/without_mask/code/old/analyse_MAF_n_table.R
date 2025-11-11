@@ -1,9 +1,5 @@
 #module load StdEnv/2020 plink/1.9b_6.21-x86_64 gcc/9.3.0 vcftools/0.1.16 bcftools/1.16 r/4.2
-#path_retrofun <- "/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag/RetroFunRVS"
-path_retrofun <- "/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag/RetroFunRVS"
-# Répertoire pour les fichiers temporaires
-path_tmp <- "/scratch/bureau/data"
-
+path_retrofun <- "/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/RetroFunRVS"
 setwd(path_retrofun)
 library(stringr); library(GenomicRanges); library(dplyr); library(RetroFunRVS)
 
@@ -22,25 +18,34 @@ is_within_any_range <- function(value, ranges_df) {
 MAF <- function(ped, var, freq = TRUE){
   ped_var <- ped[,c(5+(var*2), 6+(var*2))]
   tab <- sort(table(unlist(ped_var)))
+  #remove missing values
+  if(any(names(tab)==0)){tab <- tab[names(tab)!=0]}
   #Minor alleles are 1 and major alleles are 2. 
   #If the length of tab is 1 and the only allele is "2", then the MAF is 0;
   #If the length of tab is 1 and the only allele is "1", then the MAF is 1;
+  #If the length of tab is 0, then all genotypes are NA, tab<-c(0,1) to assure that freq isnt 0/0.
   if(length(tab)==1){
     if(names(tab) == "2"){tab <- c(0,tab)}else if(names(tab) == "1"){tab <- c(tab,0)}
-  } 
+  } else if (length(tab)==0){tab <- c(0,1)}
   if(freq){return(tab[[1]]/sum(tab))}else{return(tab[[1]])}
 }
 
 #---- Overlap 1 ----
 #This function is used to output the MAF(freq=TRUE) or to output the minor alleles(freq=FALSE) in a list of data.frames.
-sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
+sign_CRH_results <- function(freq, pheno, with_exons, consanguinity, remove_singletons = FALSE){
   if(with_exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
+  if(remove_singletons){
+    singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    out_remove_singletons <- "_without_singletons"
+  } else {
+    out_remove_singletons <- ""
+  }
 
-  #results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  results_all <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
   #Use the 10 most significant CRHs.
-  test_var <- "score"
+  test_var <- "ACAT"
+  results <- results_all[grep("Burden_1", results_all$TAD_name),]
   results <- results[order(results[[test_var]]),]
   sign_CRH <- results[1:10, 1:3]
 
@@ -48,9 +53,11 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
   MAFs_by_TAD <- vector(mode = "list", length = nrow(sign_CRH))
   names(MAFs_by_TAD) <- sign_CRH$TAD_name
   if(freq){out_name <- "MAF"}else{out_name <- "n"}
+  out_list_names <- c()
   for(CRH in 1:nrow(sign_CRH)){
     chr <- sign_CRH$chr[CRH]
     TAD <- sign_CRH$TAD[CRH]
+    out_list_names <- c(out_list_names, paste0("chr", chr, "_TAD", TAD))
     #Path to the TAD data where the present CRH is found.
     datafile <- paste0("impute5_gigi2_combined_seq_RV_FINAL_chr", chr, "_TAD_", TAD)
     if(with_exons){
@@ -59,6 +66,12 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
     }
     ped <- read.table(paste0(path_retrofun, "/TADs/", datafile, ".ped"))
     map <- read.table(paste0(path_retrofun, "/TADs/", datafile, ".map"))
+    #Remove singletons if needed
+    if(remove_singletons){
+      not_singletons <- which(!map$V2 %in% singletons$V1)
+      map <- map[not_singletons,]
+      ped <- ped[,c(1:6, sort( c(5+(not_singletons*2), 6+(not_singletons*2)) ))]
+    }
     TADs_chr <- data.table::fread(paste0(path_retrofun, "/TADs/TADs_list_chr", chr, ".bed"), header = FALSE)
     
     #Remove 2620b which is a duplicate of 2620 in our data.
@@ -70,8 +83,7 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
       if(CRHs.by.TAD[1,1] == "chrom"){CRHs.by.TAD <- CRHs.by.TAD[2:nrow(CRHs.by.TAD),]} #It appears that sometimes, the header is part of the dataframe, remove the line.
       colnames(CRHs.by.TAD) <- c("chrom", "chromStart", "chromEnd", "name")
     } else {
-      #CRHs.by.TAD <- read.table(paste0("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs_chr$V2[TAD]+1, "_", TADs_chr$V3[TAD], ".bed"), header=TRUE)
-      CRHs.by.TAD <- read.table(paste0("/lustre09/project/6033529/schizo/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs_chr$V2[TAD]+1, "_", TADs_chr$V3[TAD], ".bed"), header=TRUE)
+      CRHs.by.TAD <- read.table(paste0("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs_chr$V2[TAD]+1, "_", TADs_chr$V3[TAD], ".bed"), header=TRUE)
       colnames(CRHs.by.TAD) <- c("chrom", "chromStart", "chromEnd", "name")
     }
     GRanges.CRHs.by.TAD <- GRanges(seqnames=CRHs.by.TAD$chrom, ranges=IRanges(start=CRHs.by.TAD$chromStart, end=CRHs.by.TAD$chromEnd),name=CRHs.by.TAD$name)
@@ -81,8 +93,6 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
     ped <- ped[ped$V1 %in% subset.fam$V1,]
 
     ped$V6 <- ped$affected; ped$affected <- NULL
-    if (pheno %in% c("GCbr","GCna"))
-    {
     fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
     ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
     ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -92,7 +102,6 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
     fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
     ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
     ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-    }
     if(consanguinity){correction <- "none"}else{correction <- "replace"}
     ped_inv <- ped
     for(i in 7:ncol(ped_inv)){ped_inv[,i] <- case_when(ped_inv[,i] == 0 ~ 0, ped_inv[,i] == 1 ~ 2, ped_inv[,i] == 2 ~ 1)}
@@ -129,17 +138,23 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity){
     MAFs <- MAFs[which(MAFs$x), c("fam_pheno", names(extract_var)[extract_var])]
     MAFs_by_TAD[[CRH]] <- data.frame(t(select(MAFs, -fam_pheno))) %>% setNames(paste0(MAFs$fam_pheno, "_", out_name))
   }
+  names(MAFs_by_TAD) <- out_list_names
   return(MAFs_by_TAD)
 }
 
 #---- Overlap 0, 2 ----
 #This function is used to output the MAF(freq=TRUE) or to output the minor alleles(freq=FALSE) in a list of data.frames.
-sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, consanguinity){
+sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, consanguinity, remove_singletons = FALSE){
   if(with_exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
+  if(remove_singletons){
+    singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    out_remove_singletons <- "_without_singletons"
+  } else {
+    out_remove_singletons <- ""
+  }
 
-  #results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
   path_data <- paste0(path_retrofun, "/TADs/overlap_", overlap)
   if(with_exons){path_data <- paste0(path_data, "/with_exons")}
   #Use the 10 most significant CRHs.
@@ -157,6 +172,12 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
     datafile <- paste0("/impute5_gigi2_combined_seq_RV_FINAL_chr", chr, "_CRH_", CRH_value)
     ped <- read.table(paste0(path_data, "/", datafile, ".ped"))
     map <- read.table(paste0(path_data, "/", datafile, ".map"))
+    #Remove singletons if needed
+    if(remove_singletons){
+      not_singletons <- which(!map$V2 %in% singletons$V1)
+      map <- map[not_singletons,]
+      ped <- ped[,c(1:6, sort( c(5+(not_singletons*2), 6+(not_singletons*2)) ))]
+    }
 
     #Remove 2620b which is a duplicate of 2620 in our data.
     ped <- ped[ped[,2] != "2620b",]
@@ -167,8 +188,6 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
     ped <- ped[ped$V1 %in% subset.fam$V1,]
 
     ped$V6 <- ped$affected; ped$affected <- NULL
-    if (pheno %in% c("GCbr","GCna"))
-    {
     fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
     ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
     ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -178,7 +197,6 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
     fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
     ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
     ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-    }
     if(consanguinity){correction <- "none"}else{correction <- "replace"}
     ped_inv <- ped
     for(i in 7:ncol(ped_inv)){ped_inv[,i] <- case_when(ped_inv[,i] == 0 ~ 0, ped_inv[,i] == 1 ~ 2, ped_inv[,i] == 2 ~ 1)}
@@ -211,7 +229,7 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
 }
 
 #---- Genes ----
-sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, consanguinity){
+sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, consanguinity, remove_singletons = FALSE){
   if(strict & !with_exons){stop("Strict cannot be TRUE if with_exons is FALSE")}
   #Path to the data
   if(with_exons){
@@ -226,9 +244,14 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
     out_exons <- "all_variants"
   }
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
+  if(remove_singletons){
+    singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    out_remove_singletons <- "_without_singletons"
+  } else {
+    out_remove_singletons <- ""
+  }
 
-  #results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
   results <- results[1:(nrow(results)-2),] #Remove ACAT and Fisher
   results <- results[6:nrow(results),] #Remove genes by paper
   #Use the 10 most significant CRHs.
@@ -240,6 +263,12 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
   path_gene_info <- paste0(path_data, "/bp_sz_genes_effects_to_keep_seq_FINAL.txt")
   ped <- read.table(paste0(path_data, "/" , file))
   map <- read.table(paste0(path_data, "/" , gsub(".ped", "", file), ".map"), header = FALSE)
+  #Remove singletons if needed
+  if(remove_singletons){
+    not_singletons <- which(!map$V2 %in% singletons$V1)
+    map <- map[not_singletons,]
+    ped <- ped[,c(1:6, sort( c(5+(not_singletons*2), 6+(not_singletons*2)) ))]
+  }
   #Remove 2620b which is a duplicate of 2620 in our data.
   ped <- ped[ped[,2] != "2620b",]
 
@@ -247,8 +276,6 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
   subset.fam <- ped %>% group_by(V1) %>% summarise(n_affected = sum(affected==2)) %>% filter(n_affected!=0) %>% select(V1) %>% as.vector()
   ped <- ped[ped$V1 %in% subset.fam$V1,]
   ped$V6 <- ped$affected; ped$affected <- NULL
-  if (pheno %in% c("GCbr","GCna"))
-  {
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -258,7 +285,6 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
   fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
   ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-  }
   ped_inv <- ped
   for(i in 7:ncol(ped_inv)){ped_inv[,i] <- case_when(ped_inv[,i] == 0 ~ 0, ped_inv[,i] == 1 ~ 2, ped_inv[,i] == 2 ~ 1)}
 
@@ -304,7 +330,7 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
 }
 
 #---- Pathways ----
-sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE, consanguinity){
+sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE, consanguinity, remove_singletons = FALSE){
   if(strict & !with_exons){stop("Strict cannot be TRUE if with_exons is FALSE")}
   #Path to the data
   if(with_exons){
@@ -319,9 +345,14 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
     out_exons <- "all_variants"
   }
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
+  if(remove_singletons){
+    singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    out_remove_singletons <- "_without_singletons"
+  } else {
+    out_remove_singletons <- ""
+  }
 
-  #results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  results <- readRDS(paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
   results <- results[1:(nrow(results)-2),] #Remove ACAT and Fisher
   #Use the 10 most significant CRHs.
   test_var <- "p_analyse_onto_seul"
@@ -330,10 +361,15 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
 
   file <- "impute5_gigi2_combined_seq_RV_FINAL_genome_all_gene.ped"
   path_gene_info <- paste0(path_data, "/pathways_genes_effects_to_keep_seq_FINAL.txt")
-  #onto_file <- openxlsx::read.xlsx(paste0(path_retrofun, "/pathways/syngo_ontologies.xlsx"))
-  onto_file <- openxlsx::read.xlsx("/lustre09/project/6033529/genealogy_sims/results/Samir/Cervo/RV_in_SZ_BD_kindreds/syngo_ontologies.xlsx")
+  onto_file <- openxlsx::read.xlsx(paste0(path_retrofun, "/pathways/syngo_ontologies.xlsx"))
   ped <- read.table(paste0(path_data, "/" , file))
   map <- read.table(paste0(path_data, "/" , gsub(".ped", "", file), ".map"), header = FALSE)
+  #Remove singletons if needed
+  if(remove_singletons){
+    not_singletons <- which(!map$V2 %in% singletons$V1)
+    map <- map[not_singletons,]
+    ped <- ped[,c(1:6, sort( c(5+(not_singletons*2), 6+(not_singletons*2)) ))]
+  }
   #Remove 2620b which is a duplicate of 2620 in our data.
   ped <- ped[ped[,2] != "2620b",]
 
@@ -341,8 +377,6 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
   subset.fam <- ped %>% group_by(V1) %>% summarise(n_affected = sum(affected==2)) %>% filter(n_affected!=0) %>% select(V1) %>% as.vector()
   ped <- ped[ped$V1 %in% subset.fam$V1,]
   ped$V6 <- ped$affected; ped$affected <- NULL
-  if (pheno %in% c("GCbr","GCna"))
-  {
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   ped$V1[ped$V1 == "119" & ped$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -352,7 +386,6 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
   fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
   ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   ped$V1[ped$V1 == "255" & ped$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-  }
   ped_inv <- ped
   for(i in 7:ncol(ped_inv)){ped_inv[,i] <- case_when(ped_inv[,i] == 0 ~ 0, ped_inv[,i] == 1 ~ 2, ped_inv[,i] == 2 ~ 1)}
 
@@ -364,12 +397,9 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
     onto_name <- gsub("\\.", ":", gsub("Score_", "", rownames(sign_onto)[onto]))
     onto_genes <- onto_file$hgnc_symbol[onto_file$id == onto_name]
     write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(onto_genes, ", ")[[1]], fixed = FALSE))
-#    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
-#    onto_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
-#    system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
-    data.table::fwrite(write, paste0(path_tmp, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
-    onto_var_ID <- system(paste0('grep -f ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
-    system(paste0('rm ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
+    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
+    onto_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+    system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
     extract <- which(map[[2]] %in% onto_var_ID)
     ped_onto <- ped[,c(1:6, sort( c(5+(extract*2), 6+(extract*2)) ))]
     ped_inv_onto <- ped_inv[,c(1:6, sort( c(5+(extract*2), 6+(extract*2)) ))]

@@ -2,23 +2,16 @@
 #To run using sbatch. Just change the phenotype if needed.
 #pheno=GCbr; sbatch --job-name=${pheno}_retrofun --export=pheno=${pheno} /lustre03/project/6033529/quebec_10x/scripts/WGS_bs_2022_500samples/call/envoi_RetroFun_RVS.sh
 
-#pheno="SZbr"
-#consanguinity=T
-#exons=T
 library(stringr); library(GenomicRanges); library(RetroFunRVS); library(dplyr); library(kinship2); library("RetroFunRVS");library(foreach)
 options(scipen=999)
 
 args <- commandArgs(TRUE)
-(pheno <- as.character(args[[1]]))#pheno="GCbr"
-(consanguinity <- as.logical(args[[2]])) #consanguinity=T
-(exons <- as.logical(args[[3]])) #exons=T
+(pheno <- as.character(args[[1]]))
+(consanguinity <- as.logical(args[[2]]))
+(exons <- as.logical(args[[3]]))
 
-pathAB_ped <- "/lustre09/project/6033529/schizo/data_AB/WGS_bs_2022/500_samples_cag/RetroFunRVS/objets_ped/"
-#path_retrofun <- "/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag/RetroFunRVS"
-path_retrofun <- "/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag/RetroFunRVS/"
+path_retrofun <- "/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag/RetroFunRVS"
 setwd(paste0(path_retrofun, "/TADs"))
-# Répertoire pour les fichiers temporaires
-path_tmp <- "/scratch/bureau/data"
 
 #CRH membership problem
 membership_equi <- data.table::fread(paste0(path_retrofun, "/objets_ped/CRH_problem_membership_equivalence.txt"))
@@ -83,19 +76,17 @@ RetroFun.RVS_run <- function(pheno, with_exons, consanguinity, maxvar = 300){
       all(pedfile$V2 == pedfile.fam.infos.full$id)
       pedfile[,1:6] <- pedfile.fam.infos.full
       
+      #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
       if(consanguinity){
-        null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+        null_name <- "expected.variance.consanguinity.cryptique.seq.rds"
         correction <- "none"
         out_consanguinity <- "with_consanguinity"
       } else {
-        null_name <- paste0("expected.variance.",pheno,".rds")
+        null_name <- "expected.variance.seq.rds"
         correction <- "replace"
         out_consanguinity <- "without_consanguinity"
       }
-      if (pheno %in% c("GCbr","GCna"))
-      {
       null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
-      #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
       fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
       pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
       pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -105,9 +96,7 @@ RetroFun.RVS_run <- function(pheno, with_exons, consanguinity, maxvar = 300){
       fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
       pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
       pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-      }
-      else null <- readRDS(paste0(pathAB_ped, null_name))
-        
+      
       #Create annotation files using the .map.
       mapfile <- read.table(paste0(path_retrofun, "/TADs/", datafile, ".map"), header=FALSE)
       variants <- str_split_fixed(mapfile$V2, ":", 4)
@@ -120,8 +109,7 @@ RetroFun.RVS_run <- function(pheno, with_exons, consanguinity, maxvar = 300){
         colnames(CRHs.by.TAD) <- c("chrom", "chromStart", "chromEnd", "name")
         out_exons <- "CRHs_with_exons"
       } else {
-        #CRHs.by.TAD <- read.table(paste0("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs$V2[TAD]+1, "_", TADs$V3[TAD], ".bed"), header=TRUE)
-        CRHs.by.TAD <- read.table(paste0("/lustre09/project/6033529/schizo/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs$V2[TAD]+1, "_", TADs$V3[TAD], ".bed"), header=TRUE)
+        CRHs.by.TAD <- read.table(paste0("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/liftover_hg38_executable/TADs_for_CRHs_overlap_1_TAD/chr", chr, "/chr", chr, "_", TADs$V2[TAD]+1, "_", TADs$V3[TAD], ".bed"), header=TRUE)
         out_exons <- "CRHs_only"
       }
       
@@ -169,13 +157,10 @@ RetroFun.RVS_run <- function(pheno, with_exons, consanguinity, maxvar = 300){
       results_dataframe <- rbind(results_dataframe, out)
     }
     #saveRDS(results_dataframe, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFun.RVS_results_seq_chr", chr, ".RDS"))
-    saveRDS(results_dataframe, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFun.RVS_results_seq_chr", chr, ".RDS"))
     genome_results <- rbind(genome_results, results_dataframe)
   }
-  #saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  #data.table::fwrite(data.table::data.table(missing_TADs), paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/empty_TADs_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"))
-  saveRDS(genome_results, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  data.table::fwrite(data.table::data.table(missing_TADs), paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/empty_TADs_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"))
+  saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  data.table::fwrite(data.table::data.table(missing_TADs), paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/empty_TADs_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"))
 }
 
 #Function for CHRs overlapping 0 or 2 TADs.
@@ -233,20 +218,18 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity){
         all(pedfile$V2 == pedfile.fam.infos.full$id)
         pedfile[,1:6] <- pedfile.fam.infos.full
         
+        #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
         if(consanguinity){
-          null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+          null_name <- "expected.variance.consanguinity.cryptique.seq.rds"
           correction <- "none"
           out_consanguinity <- "with_consanguinity"
         } else {
-          null_name <- paste0("expected.variance.",pheno,".rds")
+          null_name <- "expected.variance.seq.rds"
           correction <- "replace"
           out_consanguinity <- "without_consanguinity"
         }
         if(with_exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
         
-        if (pheno %in% c("GCbr","GCna"))
-        {
-        #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
         null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
         fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
         pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
@@ -257,8 +240,6 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity){
         fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
         pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
         pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-        }
-        else null <- readRDS(paste0(pathAB_ped, null_name))
         
         #import the mapfile to create the annotation matrix.
         mapfile <- read.table(paste0(path_data, "/impute5_gigi2_combined_seq_RV_FINAL_", gsub(".txt", "", file), ".map"), header=FALSE)
@@ -278,8 +259,7 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity){
         genome_results <- rbind(genome_results, out)
       }
     }
-    #saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-    saveRDS(genome_results, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+    saveRDS(genome_results, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
   }
 }
 
@@ -336,20 +316,18 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   all(pedfile$V2 == pedfile.fam.infos.full$id)
   pedfile[,1:6] <- pedfile.fam.infos.full
   
+  #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   if(consanguinity){
-    null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    null_name <- "expected.variance.consanguinity.cryptique.seq.rds"
     correction <- "none"
     out_consanguinity <- "with_consanguinity"
   } else {
-    null_name <- paste0("expected.variance.",pheno,".rds")
+    null_name <- "expected.variance.seq.rds"
     correction <- "replace"
     out_consanguinity <- "without_consanguinity"
   }
   
-  if (pheno %in% c("GCbr","GCna"))
-  {
   null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
-  #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -359,8 +337,6 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-  }
-  else null <- readRDS(paste0(pathAB_ped, null_name))
   
   #By gene annotation matrix and by paper annotation matrix
   annotation.matrix <- matrix(data=0, nrow = nrow(mapfile), ncol = nrow(genes_list))
@@ -392,8 +368,7 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   results <- RetroFun.RVS(null, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
   results_n <- data.frame("p" = unlist(results), "n" = c(n_by_annot, NA, NA)); rownames(results_n) <- names(results)
   results_n$p_analyse_gene_seul <- c(NA, NA, NA, NA, NA, unlist(sapply(results_by_gene, FUN = function(x){x[["results"]]})), NA, NA)
-  #saveRDS(results_n, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
-  saveRDS(results_n, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
+  saveRDS(results_n, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
 }
 
 #Function for genes from SynGO pathways
@@ -419,9 +394,8 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   }
   file <- "impute5_gigi2_combined_seq_RV_FINAL_genome_all_gene.ped"
   path_gene_info <- paste0(path_data, "/pathways_genes_effects_to_keep_seq_FINAL.txt")
-  #onto <- openxlsx::read.xlsx(paste0(path_retrofun, "/pathways/syngo_ontologies.xlsx"))
-  onto <- openxlsx::read.xlsx("/lustre09/project/6033529/genealogy_sims/results/Samir/Cervo/RV_in_SZ_BD_kindreds/syngo_ontologies.xlsx")
-  
+  onto <- openxlsx::read.xlsx(paste0(path_retrofun, "/pathways/syngo_ontologies.xlsx"))
+
   mapfile <- read.table(paste0(path_data, "/" , gsub(".ped", "", file), ".map"), header = FALSE)
   colnames(mapfile) <- c("chrom", "ID", "genpos", "pos")
   pedfile <- read.table(paste0(path_data, "/" , file))
@@ -447,20 +421,18 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   all(pedfile$V2 == pedfile.fam.infos.full$id)
   pedfile[,1:6] <- pedfile.fam.infos.full
   
+  #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   if(consanguinity){
-    null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    null_name <- "expected.variance.consanguinity.cryptique.seq.rds"
     correction <- "none"
     out_consanguinity <- "with_consanguinity"
   } else {
-    null_name <- paste0("expected.variance.",pheno,".rds")
+    null_name <- "expected.variance.seq.rds"
     correction <- "replace"
     out_consanguinity <- "without_consanguinity"
   }
-
-  if (pheno %in% c("GCbr","GCna"))
-  {
+  
   null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
-  #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -470,8 +442,6 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   fam_split_255 <- readRDS(paste0(path_retrofun, "/objets_ped/fam255splitted.rds"))
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
-  }
-  else null <- readRDS(paste0(pathAB_ped, null_name))
   
   #By gene annotation matrix and by paper annotation matrix
   annotation.matrix <- matrix(data=0, nrow = nrow(mapfile), ncol = nrow(onto))
@@ -480,10 +450,8 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   for(id in onto$id){
     gene_id <- onto$hgnc_symbol[onto$id == id]
     write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(gene_id, ", ")[[1]], fixed = FALSE))
-#    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
-#    gene_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
-    data.table::fwrite(write, paste0(path_tmp, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
-    gene_var_ID <- system(paste0('grep -f ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
+    gene_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
     var_position <- which(mapfile$ID %in% gene_var_ID)
     results_by_onto[[id]][["ped"]] <- pedfile[,c(1:6, sort( c(5+(var_position*2), 6+(var_position*2)) ))]
     results_by_onto[[id]][["agg.genos.by.fam"]] <- tryCatch(agg.genos.by.fam(pedfile.path=NULL, pedfile = results_by_onto[[id]][["ped"]], correction=correction), error = function(e) e)
@@ -492,9 +460,8 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
                                                          Z_annot = matrix(1, ncol = 1, nrow = length(var_position)), W = rep(1, length(var_position)), independence=FALSE)
     annotation.matrix[var_position, id] <- 1
   }
-  #system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
-  system(paste0('rm ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
-  
+  system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
+
   #Add a total burden for every variants.
   annotation.matrix <- cbind(1, annotation.matrix)
   colnames(annotation.matrix)[1] <- "Burden"
@@ -505,16 +472,14 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   results <- RetroFun.RVS(null, agg.genos.by.fam, Z_annot = df.annotation, W = rep(1, nrow(df.annotation)), independence=FALSE)
   results_n <- data.frame("p" = unlist(results), "n" = c(n_by_annot, NA, NA)); rownames(results_n) <- names(results)
   results_n$p_analyse_onto_seul <- c(NA, unlist(sapply(results_by_onto, FUN = function(x){x[["results"]]})), NA, NA)
-  #saveRDS(results_n, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
-  saveRDS(results_n, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
+  saveRDS(results_n, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))    
 }
 
 #Run
-RetroFun.RVS_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity)
-RetroFun.RVS.overlap02_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity)
+#RetroFun.RVS_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity)
+#RetroFun.RVS.overlap02_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity)
 #In this case, if exons is true, the analysis is made ONLY among the variants that are exonic.
 #if it is false, then all variants in the genes are included.
-
 if(exons){
   RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity)
   RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity)
@@ -526,26 +491,22 @@ if(exons){
 #This code import the functions used to output the MAF(freq=TRUE) or the minor alleles(freq=FALSE) of the 10 most significants RetroFun-RVS results.
 if(exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
 if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
-#source("/lustre03/project/6033529/quebec_10x/scripts/WGS_bs_2022_500samples/call/analyse_MAF_n_table.R")
-source("/lustre09/project/6033529/schizo/scripts_AB/analyse_MAF_n_table.R")
+source("/lustre03/project/6033529/quebec_10x/scripts/WGS_bs_2022_500samples/call/analyse_MAF_n_table.R")
 
 MAFs_by_TAD <- sign_CRH_results(freq = TRUE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
 n_by_TAD <- sign_CRH_results(freq = FALSE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
 results_by_TAD <- purrr::map(Map(cbind, MAFs_by_TAD, n_by_TAD), function(x){x[sort(colnames(x))]})
-#saveRDS(results_by_TAD, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-saveRDS(results_by_TAD, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+saveRDS(results_by_TAD, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
 
 MAFs_by_TAD_0 <- sign_CRH_results_overlap(freq = TRUE, pheno = pheno, overlap = 0, with_exons = exons, consanguinity = consanguinity)
 n_by_TAD_0 <- sign_CRH_results_overlap(freq = FALSE, pheno = pheno, overlap = 0, with_exons = exons, consanguinity = consanguinity)
 results_by_TAD_0 <- purrr::map(Map(cbind, MAFs_by_TAD_0, n_by_TAD_0), function(x){x[sort(colnames(x))]})
-#saveRDS(results_by_TAD_0, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_0_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-saveRDS(results_by_TAD_0, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_0_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+saveRDS(results_by_TAD_0, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_0_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
 
 MAFs_by_TAD_2 <- sign_CRH_results_overlap(freq = TRUE, pheno = pheno, overlap = 2, with_exons = exons, consanguinity = consanguinity)
 n_by_TAD_2 <- sign_CRH_results_overlap(freq = FALSE, pheno = pheno, overlap = 2, with_exons = exons, consanguinity = consanguinity)
 results_by_TAD_2 <- purrr::map(Map(cbind, MAFs_by_TAD_2, n_by_TAD_2), function(x){x[sort(colnames(x))]})
-#saveRDS(results_by_TAD_2, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_2_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-saveRDS(results_by_TAD_2, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_2_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+saveRDS(results_by_TAD_2, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_CRH_sign_by_fam_overlap_2_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
 
 if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
 if(exons){
@@ -553,25 +514,21 @@ if(exons){
   MAFs_by_genes_litt <- sign_genes_litt_results(freq = TRUE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
   n_by_genes_litt <- sign_genes_litt_results(freq = FALSE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
   results_by_genes_litt <- purrr::map(Map(cbind, MAFs_by_genes_litt, n_by_genes_litt), function(x){x[sort(colnames(x))]})
-  #saveRDS(results_by_genes_litt, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  saveRDS(results_by_genes_litt, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  
+  saveRDS(results_by_genes_litt, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+
   MAFs_by_genes_pathways <- sign_genes_pathways_results(freq = TRUE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
   n_by_genes_pathways <- sign_genes_pathways_results(freq = FALSE, pheno = pheno, with_exons = exons, consanguinity = consanguinity)
   results_by_genes_pathways <- purrr::map(Map(cbind, MAFs_by_genes_pathways, n_by_genes_pathways), function(x){x[sort(colnames(x))]})
-  #saveRDS(results_by_genes_pathways, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  saveRDS(results_by_genes_pathways, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  
+  saveRDS(results_by_genes_pathways, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+
   out_exons <- "only_exonic_variants_without_synonymous"
   MAFs_by_genes_litt_strict <- sign_genes_litt_results(freq = TRUE, pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity)
   n_by_genes_litt_strict <- sign_genes_litt_results(freq = FALSE, pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity)
   results_by_genes_litt_strict <- purrr::map(Map(cbind, MAFs_by_genes_litt_strict, n_by_genes_litt_strict), function(x){x[sort(colnames(x))]})
-  #saveRDS(results_by_genes_litt_strict, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  saveRDS(results_by_genes_litt_strict, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  
+  saveRDS(results_by_genes_litt_strict, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_genes_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+
   MAFs_by_genes_pathways_strict <- sign_genes_pathways_results(freq = TRUE, pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity)
   n_by_genes_pathways_strict <- sign_genes_pathways_results(freq = FALSE, pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity)
   results_by_genes_pathways_strict <- purrr::map(Map(cbind, MAFs_by_genes_pathways_strict, n_by_genes_pathways_strict), function(x){x[sort(colnames(x))]})
-  #saveRDS(results_by_genes_pathways_strict, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
-  saveRDS(results_by_genes_pathways_strict, paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
+  saveRDS(results_by_genes_pathways_strict, paste0("/lustre03/project/6033529/quebec_10x/results/RetroFunRVS/WGS_bs_2022_500samples/MAF_n_variants_10_pathways_sign_by_fam_", pheno, "_", out_exons, "_", out_consanguinity, ".RDS"))
 }
