@@ -1,10 +1,10 @@
 #This code is used to split the 10th, 18th and 47th families when running the code to get the NULL objects for RetroFun-RVS
 
-if(fam_idx == 10){
+if(pedigree$famid[1] == "119"){
   new_founders <- list(c(2395,2562), c(2560,2561)); last_founders <- c(2646,  2647)
-}else if(fam_idx == 18){
+}else if(pedigree$famid[1] == "131"){
   new_founders <- list(c(2753, 2754), c(2795, 2794, 2889, 2890)); last_founders <- c(3066,  3067)
-}else if(fam_idx == 47){
+}else if(pedigree$famid[1] == "255"){
   new_founders <- list(c(843, 844, 845, 851), c(841, 842, 829, 827)); last_founders <- c(839, 840)
 }
 
