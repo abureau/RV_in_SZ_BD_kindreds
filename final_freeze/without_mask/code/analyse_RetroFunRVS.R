@@ -274,11 +274,13 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity, remove_
         
         #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
         if(consanguinity){
-          null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+          #null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+          null_name <- paste0("expected.variance.consanguinity.cryptique.eta",etav,".",pheno,".rds")
           correction <- "none"
           out_consanguinity <- "with_consanguinity"
         } else {
-          null_name <- paste0("expected.variance.",pheno,".rds")
+          #null_name <- paste0("expected.variance.",pheno,".rds")
+          null_name <- paste0("expected.variance.eta",etav,".",pheno,".rds")
           correction <- "replace"
           out_consanguinity <- "without_consanguinity"
         }
@@ -286,7 +288,7 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity, remove_
         
         if (pheno %in% c("GCbr","GCna"))
         {
-        null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
+        #null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
         fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
         pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
         pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -297,7 +299,8 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity, remove_
         pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
         pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
         }
-        else null <- readRDS(paste0(pathAB_ped, null_name))
+        # Tous les objets nulls avec le paramètre eta sont dans pathAB_ped
+        null <- readRDS(paste0(pathAB_ped, null_name))
         
         variants <- str_split_fixed(mapfile$V2, ":", 4)
         GRanges.variants <-  GRanges(seqnames=variants[,1], ranges=IRanges(start=as.numeric(variants[,2]),end=as.numeric(variants[,2])))
@@ -391,18 +394,20 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   
   #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   if(consanguinity){
-    null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    #null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    null_name <- paste0("expected.variance.consanguinity.cryptique.eta",etav,".",pheno,".rds")
     correction <- "none"
     out_consanguinity <- "with_consanguinity"
   } else {
-    null_name <- paste0("expected.variance.",pheno,".rds")
+    #null_name <- paste0("expected.variance.",pheno,".rds")
+    null_name <- paste0("expected.variance.eta",etav,".",pheno,".rds")
     correction <- "replace"
     out_consanguinity <- "without_consanguinity"
   }
   
   if (pheno %in% c("GCbr","GCna"))
   {
-  null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
+  #null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -413,7 +418,8 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
   }
-  else null <- readRDS(paste0(pathAB_ped, null_name))
+  # Tous les objets nulls avec le paramètre eta sont dans pathAB_ped
+  null <- readRDS(paste0(pathAB_ped, null_name))
   
   #By gene annotation matrix and by paper annotation matrix
   annotation.matrix <- matrix(data=0, nrow = nrow(mapfile), ncol = nrow(genes_list))
@@ -519,18 +525,20 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   
   #Adjust the pedigree for the 3 problematic families in agg.genos.by.fam.
   if(consanguinity){
-    null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    #null_name <- paste0("expected.variance.consanguinity.cryptique.",pheno,".rds")
+    null_name <- paste0("expected.variance.consanguinity.cryptique.eta",etav,".",pheno,".rds")
     correction <- "none"
     out_consanguinity <- "with_consanguinity"
   } else {
-    null_name <- paste0("expected.variance.",pheno,".rds")
+    #null_name <- paste0("expected.variance.",pheno,".rds")
+    null_name <- paste0("expected.variance.eta",etav,".",pheno,".rds")
     correction <- "replace"
     out_consanguinity <- "without_consanguinity"
   }
   
   if (pheno %in% c("GCbr","GCna"))
   {
-  null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
+  #null <- readRDS(paste0(path_retrofun, "/objets_ped/", null_name))
   fam_split_119 <- readRDS(paste0(path_retrofun, "/objets_ped/fam119splitted.rds"))
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-1"]] <- "119-1"
   pedfile$V1[pedfile$V1 == "119" & pedfile$V2 %in% fam_split_119$id[fam_split_119$fam=="119-2"]] <- "119-2"
@@ -541,7 +549,8 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-1"]] <- "255-1"
   pedfile$V1[pedfile$V1 == "255" & pedfile$V2 %in% fam_split_255$id[fam_split_255$fam=="255-2"]] <- "255-2"
   }
-  else null <- readRDS(paste0(pathAB_ped, null_name))
+  # Tous les objets nulls avec le paramètre eta sont dans pathAB_ped
+  null <- readRDS(paste0(pathAB_ped, null_name))
   
   #By gene annotation matrix and by paper annotation matrix
   annotation.matrix <- matrix(data=0, nrow = nrow(mapfile), ncol = nrow(onto))
