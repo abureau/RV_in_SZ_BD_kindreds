@@ -3,6 +3,8 @@
 path_retrofun <- "/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/RetroFunRVS"
 setwd(path_retrofun)
 library(stringr); library(GenomicRanges); library(dplyr); library(RetroFunRVS)
+# Répertoire pour les fichiers temporaires
+path_tmp <- "/scratch/bureau/data"
 
 #Import pedigree data with the phenotype
 loadRData <- function(file_name){load(file_name); get(ls()[ls() != "file_name"])}
@@ -410,9 +412,12 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
   for(onto in 1:nrow(sign_onto)){
     onto_name <- gsub("\\.", ":", gsub("Score_", "", rownames(sign_onto)[onto]))
     onto_genes <- onto_file$hgnc_symbol[onto_file$id == onto_name]
-    write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(onto_genes, ", ")[[1]], fixed = FALSE))
-    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
-    onto_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+#    write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(onto_genes, ", ")[[1]], fixed = FALSE))
+#    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
+#    onto_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+    data.table::fwrite(write, paste0(path_tmp, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
+    onto_var_ID <- system(paste0('grep -f ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+    system(paste0('rm ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
     system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
     extract <- which(map[[2]] %in% onto_var_ID)
     ped_onto <- ped[,c(1:6, sort( c(5+(extract*2), 6+(extract*2)) ))]
