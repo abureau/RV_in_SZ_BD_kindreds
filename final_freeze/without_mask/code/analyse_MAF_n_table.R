@@ -412,13 +412,13 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
   for(onto in 1:nrow(sign_onto)){
     onto_name <- gsub("\\.", ":", gsub("Score_", "", rownames(sign_onto)[onto]))
     onto_genes <- onto_file$hgnc_symbol[onto_file$id == onto_name]
-#    write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(onto_genes, ", ")[[1]], fixed = FALSE))
+    write <- data.table::data.table(gsub("(.*)", "|\\1|", strsplit(onto_genes, ", ")[[1]], fixed = FALSE))
 #    data.table::fwrite(write, paste0(path_data, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
 #    onto_var_ID <- system(paste0('grep -f ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
+#    system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
     data.table::fwrite(write, paste0(path_tmp, "/gene_i_", pheno, "_", out_exons, "_", out_consanguinity, ".txt"), col.names = FALSE, row.names = FALSE)
     onto_var_ID <- system(paste0('grep -f ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt ', path_gene_info, '| cut -d " " -f 1 | sed "s/ID=//g" | sed "s/,//g"'), intern = TRUE)
     system(paste0('rm ', path_tmp, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
-    system(paste0('rm ', path_data, '/gene_i_', pheno, '_', out_exons, '_', out_consanguinity, '.txt'))
     extract <- which(map[[2]] %in% onto_var_ID)
     ped_onto <- ped[,c(1:6, sort( c(5+(extract*2), 6+(extract*2)) ))]
     ped_inv_onto <- ped_inv[,c(1:6, sort( c(5+(extract*2), 6+(extract*2)) ))]
