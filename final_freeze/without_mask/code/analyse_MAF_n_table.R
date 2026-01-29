@@ -45,7 +45,7 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity, remove_sing
     out_remove_singletons <- ""
   }
 
-  results_all <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
+  results_all <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons,"_eta",etav, ".RDS"))
   #Use the 10 most significant CRHs.
   test_var <- "ACAT"
   results <- results_all[grep("Burden_1", results_all$TAD_name),]
@@ -160,7 +160,7 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
     out_remove_singletons <- ""
   }
 
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
+  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_all_chromosomes_overlap_", overlap, "_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons,"_eta",etav, ".RDS"))
   path_data <- paste0(path_retrofun, "/TADs/overlap_", overlap)
   if(with_exons){path_data <- paste0(path_data, "/with_exons")}
   #Use the 10 most significant CRHs.
@@ -260,7 +260,7 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
     out_remove_singletons <- ""
   }
 
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
+  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_genes_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons,"_eta",etav, ".RDS"))
   results <- results[1:(nrow(results)-2),] #Remove ACAT and Fisher
   results <- results[6:nrow(results),] #Remove genes by paper
   #Use the 10 most significant CRHs.
@@ -364,7 +364,7 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
     out_remove_singletons <- ""
   }
 
-  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons, ".RDS"))
+  results <- readRDS(paste0("/lustre09/project/6033529/schizo/results_AB/RetroFunRVS/WGS_bs_2022_500samples/without_mask/RetroFunRVS_results_seq_pathways_", pheno, "_", out_exons, "_", out_consanguinity, out_remove_singletons,"_eta",etav,".RDS"))
   results <- results[1:(nrow(results)-2),] #Remove ACAT and Fisher
   #Use the 10 most significant CRHs.
   test_var <- "p_analyse_onto_seul"
