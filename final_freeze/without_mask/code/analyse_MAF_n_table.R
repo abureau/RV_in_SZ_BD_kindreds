@@ -39,7 +39,7 @@ sign_CRH_results <- function(freq, pheno, with_exons, consanguinity, remove_sing
   if(with_exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
   if(remove_singletons){
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -154,7 +154,7 @@ sign_CRH_results_overlap <- function(freq, pheno, overlap = c(0,2), with_exons, 
   if(with_exons){out_exons <- "CRHs_with_exons"} else {out_exons <- "CRHs_only"}
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
   if(remove_singletons){
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -254,7 +254,7 @@ sign_genes_litt_results <- function(freq, pheno, with_exons, strict = FALSE, con
   }
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
   if(remove_singletons){
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -358,7 +358,7 @@ sign_genes_pathways_results <- function(freq, pheno, with_exons, strict = FALSE,
   }
   if(consanguinity){out_consanguinity <- "with_consanguinity"} else {out_consanguinity <- "without_consanguinity"}
   if(remove_singletons){
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
