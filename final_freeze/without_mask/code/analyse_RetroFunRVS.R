@@ -42,7 +42,7 @@ RetroFun.RVS_run <- function(pheno, with_exons, consanguinity, maxvar = 300, rem
   
   if(remove_singletons){
     #singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -211,7 +211,7 @@ RetroFun.RVS.overlap02_run <- function(pheno, with_exons, consanguinity, remove_
   
   if(remove_singletons){
     #singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -334,7 +334,7 @@ RetroFun.RVS.genes.litt_run <- function(pheno, with_exons, strict = FALSE, consa
   
   if(remove_singletons){
     #singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -467,7 +467,7 @@ RetroFun.RVS.genes.pathways_run <- function(pheno, with_exons, strict = FALSE, c
   
   if(remove_singletons){
     #singletons <- fread("/lustre03/project/6033529/quebec_10x/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
-    singletons <- fread("/lustre09/project/6033529/schizo/data/WGS_bs_2022/500_samples_cag_without_mask/imputation_comb/merged_with_seq/freq/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
+    singletons <- fread("/lustre09/project/6033529/schizo/data_AD/impute5_gigi2_combined_seq_fam_singleton.snplist", header = FALSE)
     out_remove_singletons <- "_without_singletons"
   } else {
     out_remove_singletons <- ""
@@ -597,8 +597,8 @@ RetroFun.RVS.overlap02_run(pheno = pheno, with_exons = exons, consanguinity = co
 #In this case, if exons is true, the analysis is made ONLY among the variants that are exonic.
 #if it is false, then all variants in the genes are included.
 if(exons){
-  #RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity, remove_singletons = remove_singletons)
-  #RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity, remove_singletons = remove_singletons)
+  RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity, remove_singletons = remove_singletons)
+  RetroFun.RVS.genes.litt_run(pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity, remove_singletons = remove_singletons)
   RetroFun.RVS.genes.pathways_run(pheno = pheno, with_exons = exons, consanguinity = consanguinity, remove_singletons = remove_singletons)
   RetroFun.RVS.genes.pathways_run(pheno = pheno, with_exons = exons, strict = TRUE, consanguinity = consanguinity, remove_singletons = remove_singletons)  
 }
